@@ -1,0 +1,99 @@
+class Chat_Frame(wx.Frame):
+    def __init__(self, parent, client, contact):
+        """
+        displays a chat frame
+        """
+        self.frame_name="Chat"
+
+        self.client = client
+        self.contact = contact  #other client
+        self.massages_other_side = []
+        self.massages_self_side = []
+
+        #self.client.get_new_msgs()
+
+        self.index=0
+
+
+
+        wx.Frame.__init__(self, parent, -1, "PicChat - Login", size=(APP_SIZE_X, APP_SIZE_Y))
+
+        p = wx.Panel(self, -1)
+
+        #creating background pic
+        fgs = wx.FlexGridSizer(cols=2, hgap=10, vgap=10)
+        imageFile = 'chat_frame.png'
+        img1 = wx.Image(imageFile, wx.BITMAP_TYPE_ANY)
+
+        self.sb1 = wx.StaticBitmap(p, -1, wx.BitmapFromImage(img1), size=(APP_SIZE_X - 100, APP_SIZE_Y))
+
+        fgs.Add(self.sb1)
+        p.SetSizerAndFit(fgs)
+        font = wx.Font(20, wx.ROMAN, wx.ITALIC, wx.NORMAL)
+        contact_name = wx.StaticText(self.sb1, -1, self.contact, pos=(260, 95), size=(140, 25))
+        contact_name.SetFont(font)
+        contact_name.SetForegroundColour((0, 0, 49))
+        contact_name.SetBackgroundColour((153, 217, 234))
+
+
+        self.chat_box=wx.ListCtrl(self.sb1, pos=(25, 130),size=(545, 470),style=wx.LC_REPORT|wx.BORDER_SUNKEN)
+        self.chat_box.InsertColumn(0, '',width=545)
+
+        #self.show_new_msgs()
+
+
+
+
+        self.shape_button('#000035', "WHITE", (425, 625), (150, 60), 1, "send", self.sb1, fgs)
+        #self.shape_button('#000035', "WHITE", (30, 625), (150, 60), 2, "search", self.sb1, fgs)
+
+        self.massage = wx.TextCtrl(self.sb1, value="Enter text here", pos=(188, 625), size=(230, 60),style=wx.TE_MULTILINE)
+        self.massage.SetMaxLength(50)
+
+
+
+        self.Bind(wx.EVT_BUTTON, self.send_data, id=1)  #listens to the button "send" and on click do the action
+
+        self.Fit()
+        self.Centre()
+        self.Show(True)
+        time.sleep(3)
+
+        #while True:
+            #self.client.get_new_msgs()
+            #self.show_new_msgs()
+            #time.sleep(3)
+
+
+    def add_line(self):
+        if len(self.massage.Value)>0:
+            line = "You: "+self.massage.Value
+            self.chat_box.InsertStringItem(self.index, line)
+            self.index+=1
+
+    def show_new_msgs(self):
+        #print "print ------"+str(self.client.new_msgs)
+        if self.contact in self.client.new_msgs.keys():
+            if len(self.client.new_msgs[self.contact])>0:
+                for msg in self.client.new_msgs[self.contact]:
+                    print str(msg)
+                    if len(msg)>0:
+                        line = self.contact+": "+msg
+                        self.chat_box.InsertStringItem(self.index, line)
+                        self.index+=1
+
+    def shape_button(self, color1, color2, pos, size, id, string, where_to, add_to):
+        """
+        shapes a button and presents it on the screen
+        """
+        b = buttons.GenButton(where_to, id, string, pos, size)
+        b.SetFont(wx.Font(20, wx.DEFAULT, wx.NORMAL, wx.BOLD, False))
+        b.SetBackgroundColour(color1)
+        b.SetForegroundColour(color2)
+        add_to.Add(b)
+
+    def send_data(self,event):
+        """hide the text in the picture and send  the picture"""
+        data="MSG|"+self.contact+"|"+self.massage.Value+"|"+str(5+len(self.contact)+len(self.massage.Value))
+        self.client.send_with_size(data)
+        self.add_line()
